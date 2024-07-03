@@ -66,6 +66,10 @@ export default class GenomeMap {
     };
   }
 
+  featuresToRenderOn(chromosomeIndex, dataStart, dataEnd) {
+    return this.chromosomes[chromosomeIndex];
+  }
+
   markerAt(dataIndex) {
     const foundChromosomes = this.intervalTree.search(dataIndex, dataIndex);
     const chromosome = foundChromosomes[0];

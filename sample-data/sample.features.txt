@@ -1,0 +1,7 @@
+# fjFile = FEATURES
+gene1	2H	14.3	16.2
+gene2	2H	20	35
+gene3	2H	49	63
+gene4	2H	34	48
+gene5	2H	20	54
+gene6	2H	30	41

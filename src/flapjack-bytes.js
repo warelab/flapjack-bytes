@@ -3,6 +3,7 @@ import GenotypeCanvas from './GenotypeCanvas';
 import OverviewCanvas from './OverviewCanvas';
 import CanvasController from './CanvasController';
 import MapImporter from './MapImporter';
+import FeatureImporter from './FeatureImporter';
 import GenotypeImporter from './GenotypeImporter';
 import PhenotypeImporter from './PhenotypeImporter';
 import SimilarityLineSort from './sort/SimilarityLineSort';
@@ -30,6 +31,7 @@ export default function GenotypeRenderer() {
   const boxSize = 17;
 
   let genomeMap;
+  let genomeFeatures;
   let phenotypes;
   let traits;
   let dataSet;
@@ -1148,6 +1150,13 @@ export default function GenotypeRenderer() {
 
     setProgressBarLabel("Loading file contents...");
     let loadingPromises = [];
+    let featurePromise;
+
+    if (config.featureFileDom !== undefined){
+      const featureFile = document.getElementById(config.featureFileDom.replace('#', '')).files[0];
+      featurePromise = loadFromFile(featureFile);
+      loadingPromises.push(featurePromise);
+    }
 
     if (config.mapFileDom !== undefined){
       const mapFile = document.getElementById(config.mapFileDom.replace('#', '')).files[0];
@@ -1157,6 +1166,16 @@ export default function GenotypeRenderer() {
       mapPromise = mapPromise.then((result) => {
         const mapImporter = new MapImporter();
         genomeMap = mapImporter.parseFile(result);
+        if (featurePromise) {
+          // Load feature data
+          featurePromise = featurePromise.then((result) => {
+            const featureImporter = new FeatureImporter();
+            genomeFeatures = featureImporter.parseFile(result, genomeMap);
+          }).catch(reason => {
+            console.error(reason);
+            genomeFeatures = undefined;
+          });
+        }
       }).catch(reason => {
         console.error(reason);
         genomeMap = undefined;
@@ -1165,6 +1184,7 @@ export default function GenotypeRenderer() {
       loadingPromises.push(mapPromise);
     }
 
+    
     if (config.phenotypeFileDom !== undefined){
       const phenotypeFile = document.getElementById(config.phenotypeFileDom.replace('#', '')).files[0];
       let phenotypePromise = loadFromFile(phenotypeFile);

@@ -11,6 +11,22 @@ export default class GenotypeCanvas {
     this.canvas.style.display = "block";
     this.drawingContext = this.canvas.getContext('2d');
 
+    this.featureCanvas = document.createElement('canvas');
+    this.featureCanvas.width = width;
+    this.featureCanvas.height = height;
+    this.featureCanvas.style.display = "block";
+    this.featureDrawingContext = this.canvas.getContext('2d');
+
+    // var featureCanvas = document.getElementById('featureCanvas');
+
+    // if (!featureCanvas || !featureCanvas.getContext) {
+    //   console.error("Canvas not supported or ID not found: featureCanvas");
+    //   return;
+    // }
+    // var ctx1 = canvas1.getContext('2d');
+    // ctx1.fillStyle = 'red';
+    // ctx1.fillRect(10, 10, 50, 50);
+
     this.backBuffer = document.createElement('canvas');
     this.backBuffer.width = width;
     this.backBuffer.height = height;
@@ -31,7 +47,7 @@ export default class GenotypeCanvas {
     this.verticalScrollbar = new ScrollBar(width, this.alleleCanvasHeight() + this.scrollbarHeight,
       this.scrollbarWidth, this.alleleCanvasHeight(), true);
     this.horizontalScrollbar = new ScrollBar(this.alleleCanvasWidth(),
-      height, this.alleleCanvasWidth(), this.scrollbarHeight, false);
+      height, this.alleleCanvasWidth(), this.scrollbarHeight, false); 
 
     this.translatedX = 0;
     this.translatedY = 0;
@@ -158,7 +174,12 @@ export default class GenotypeCanvas {
 
     return mapMarkerPos;
   }
+  calcMapFeaturePos(position, mapScaleFactor, drawStart) {
+    let mapFeaturePos = ((position) * (mapScaleFactor));
+    mapFeaturePos = drawStart > 0 ? mapFeaturePos + drawStart : mapFeaturePos;
 
+    return mapFeaturePos;
+  }
   highlightMarker(dataWidth, markerStart, markerEnd, xPos) {
     if (this.markerUnderMouse) {
       const renderData = this.dataSet.markersToRenderOn(this.selectedChromosome, markerStart, markerEnd);
@@ -180,12 +201,12 @@ export default class GenotypeCanvas {
       const lastMarkerPos = chromosome.markers[renderData.firstMarker + dW].position;
       const scaleFactor = lastMarkerPos == 0 ? 0 /* hack for cases where variants are not positioned */ : chromosomeWidth / (lastMarkerPos - firstMarkerPos);
 
-      this.highlightMarkerName(firstMarkerPos, scaleFactor, scaleFactor == 0 ? xPos : drawStart);
+      //this.highlightMarkerName(firstMarkerPos, scaleFactor, scaleFactor == 0 ? xPos : drawStart);
 
       this.drawingContext.save();
 
       // Translate to the correct position to draw the map
-      this.drawingContext.translate(this.alleleCanvasXOffset, 10);
+      this.drawingContext.translate(this.alleleCanvasXOffset, 18);
 
       xPos += (this.boxSize / 2);
       this.drawingContext.strokeStyle = '#F00';
@@ -389,6 +410,13 @@ export default class GenotypeCanvas {
     this.renderScrollbars();
   }
 
+  renderFeature(mapCanvas, feature, mapScaleFactor, drawStart){
+    const mapFeatureStartPos = this.calcMapFeaturePos(feature.start, mapScaleFactor, drawStart);
+    const mapFeatureEndPos = this.calcMapFeaturePos(feature.end, mapScaleFactor, drawStart);
+    mapCanvas.fillRect(mapFeatureStartPos, 1, mapFeatureEndPos, 10);
+    console.log("renderFeature",feature,mapFeatureStartPos,mapFeatureEndPos);
+  }
+
   renderMarker(mapCanvas, marker, genoMarkerPos, firstMarkerPos, mapScaleFactor, drawStart) {
     const mapMarkerPos = this.calcMapMarkerPos(marker, firstMarkerPos, mapScaleFactor, drawStart);
 
@@ -432,11 +460,45 @@ export default class GenotypeCanvas {
       this.renderMarker(this.backContext, marker, xPos, firstMarkerPos, scaleFactor, scaleFactor == 0 ? xPos : drawStart);
     }
   }
+  renderFeatures(renderData,featureData) {
+    const chrStart = 0;
+    const chrEnd = this.dataSet.genomeMap.chromosomes[this.selectedChromosome].markerCount() * this.boxSize;
+    const drawStart = -this.translatedX;
+
+    const chromosome = this.dataSet.genomeMap.chromosomes[this.selectedChromosome];
+
+    const potentialWidth = drawStart > 0 ? this.alleleCanvasWidth() - drawStart : this.alleleCanvasWidth();
+    const chromosomeWidth = Math.min(chrEnd - this.translatedX, potentialWidth, chrEnd - chrStart);
+
+    // The data array can have too many markers in it due to the gaps between
+    // chromosomes, this is a fudge to ensure we don't try to draw too many markers
+    const chromosomeMarkerWidth = Math.max(0, Math.floor(chromosomeWidth / this.boxSize));
+    const dataWidth = Math.min(renderData.lastMarker - renderData.firstMarker, chromosomeMarkerWidth);
+
+    const firstMarkerPos = chromosome.markers[renderData.firstMarker].position;
+    const lastMarkerPos = chromosome.markers[renderData.firstMarker + dataWidth].position;
+    const scaleFactor = lastMarkerPos == 0 ? 0 /* hack for cases where variants are not positioned */ : chromosomeWidth / (lastMarkerPos - firstMarkerPos);
+
+    // this.dataSet.genomeMap.chromosomes[this.selectedChromosome].features.forEach(feature => {
+    //   this.renderFeature(this.backContext, feature, scaleFactor, drawStart);
+    // })
+    featureData.features.forEach(feature => {
+      this.renderFeature(this.backContext, feature, scaleFactor, drawStart);
+    })
+
+  //   for (let markerIndex = renderData.firstMarker; markerIndex <= renderData.lastMarker; markerIndex += 1) {
+  //     const marker = this.dataSet.genomeMap.chromosomes[this.selectedChromosome].markers[markerIndex];
+  //     let xPos = drawStart + (markerIndex * this.boxSize);
+  //     xPos += (this.boxSize / 2);
+  //     this.renderMarker(this.backContext, marker, xPos, firstMarkerPos, scaleFactor, scaleFactor == 0 ? xPos : drawStart);
+  //   }
+  }
 
   renderChromosome(chromosomeData) {
     const width = this.dataSet.genomeMap.chromosomes[this.selectedChromosome].markerCount() * this.boxSize;
     this.backContext.strokeRect(-this.translatedX, 1, width, 10);
   }
+
 
   renderMap(markerStart, markerEnd) {
     this.backContext.save();
@@ -451,13 +513,25 @@ export default class GenotypeCanvas {
     this.backContext.clip(region);
 
     // Translate to the correct position to draw the map
-    this.backContext.translate(this.alleleCanvasXOffset, 10);
+    this.backContext.translate(this.alleleCanvasXOffset, 18);
 
     const renderData = this.dataSet.markersToRenderOn(this.selectedChromosome, markerStart, markerEnd);
 
+    const featureData = this.dataSet.featuresToRenderOn(this.selectedChromosome, markerStart, markerEnd);
     this.renderChromosome(renderData);
     this.renderMarkers(renderData);
 
+    this.backContext.translate(this.alleleCanvasXOffset, -18);
+    this.backContext.fillStyle = 'blue';
+
+
+    // const featureData = [
+    //   {start:10,end:20},{start:40,end:60}
+    // ];
+    this.renderFeatures(renderData, featureData);
+
+    this.backContext.translate(this.alleleCanvasXOffset, 36);
+    this.backContext.strokeStyle = 'gray';
     this.backContext.restore();
   }
 

@@ -16,6 +16,15 @@
           <div>
             <label for="phenofile">Phenotype file:</label>
             <input type="file" id="phenofile" name="phenofile">
+                
+          </div>
+          <div>
+            <label for="featurefile">Feature file:</label>
+            <input type="file" id="featurefile" name="featurefile">
+                
+          </div>
+          <div>
+            <canvas id="featurecanvas"></canvas>
           </div>
           <input type="submit" action="#" id="submit" name="submit" value="Submit">
       </div>
@@ -33,6 +42,7 @@
               mapFileDom: "mapfile",
               genotypeFileDom: "genofile",
               phenotypeFileDom: "phenofile",
+              featureFileDom: "featurefile",
               overviewWidth: null, overviewHeight: 200,
               minGenotypeAutoWidth: 600, minGenotypeAutoHeight: 600,
             });

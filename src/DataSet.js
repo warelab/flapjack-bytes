@@ -48,6 +48,9 @@ export default class DataSet {
   markersToRenderOn(chromosomeIndex, markerStart, markerEnd) {
     return this.genomeMap.markersToRenderOn(chromosomeIndex, markerStart, markerEnd);
   }
+  featuresToRenderOn(chromosomeIndex, markerStart, markerEnd) {
+    return this.genomeMap.featuresToRenderOn(chromosomeIndex, markerStart, markerEnd);
+  }
 
   markerAt(markerIndex) {
     return this.genomeMap.markerAt(markerIndex);
