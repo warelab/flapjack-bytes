@@ -935,11 +935,11 @@ export default function GenotypeRenderer() {
     clearParent(config.domParent);
     createRendererComponents(config, true);
 
-    let mapFile, genotypeFile, phenotypeFile;
+    let mapFile, genotypeFile, phenotypeFile, featureFile;
     let germplasmData;
     let loadingPromises = [];
-    let mapLoaded = 0, genotypeLoaded = 0, phenotypeLoaded = 0;
-    let mapSize = 0, genotypeSize = 0, phenotypeSize = 0;
+    let mapLoaded = 0, genotypeLoaded = 0, phenotypeLoaded = 0, featureLoaded = 0;
+    let mapSize = 0, genotypeSize = 0, phenotypeSize = 0, featureSize = 0;
 
     setProgressBarLabel("Downloading data...");
     setAdvancement(0);
@@ -951,7 +951,7 @@ export default function GenotypeRenderer() {
           if (progressEvent.lengthComputable){
             mapLoaded = progressEvent.loaded;
             mapSize = progressEvent.total;
-            setAdvancement((mapLoaded + genotypeLoaded + phenotypeLoaded) / (mapSize + genotypeSize + phenotypeSize));
+            setAdvancement((mapLoaded + genotypeLoaded + phenotypeLoaded + featureLoaded) / (mapSize + genotypeSize + phenotypeSize +featureSize));
           }
         }
       }).then((response) => {
@@ -970,7 +970,7 @@ export default function GenotypeRenderer() {
           if (progressEvent.lengthComputable){
             phenotypeLoaded = progressEvent.loaded;
             phenotypeSize = progressEvent.total;
-            setAdvancement((mapLoaded + genotypeLoaded + phenotypeLoaded) / (mapSize + genotypeSize + phenotypeSize));
+            setAdvancement((mapLoaded + genotypeLoaded + phenotypeLoaded + featureLoaded) / (mapSize + genotypeSize + phenotypeSize +featureSize));
           }
         }
       }).then((response) => {
@@ -982,13 +982,32 @@ export default function GenotypeRenderer() {
       loadingPromises.push(phenotypePromise);
     }
 
+    if (config.featureFileURL){
+      let featurePromise = axios.get(config.featureFileURL, {
+        headers: { 'Content-Type': 'text/plain' },
+        onDownloadProgress: function (progressEvent){
+          if (progressEvent.lengthComputable){
+            featureLoaded = progressEvent.loaded;
+            featureSize = progressEvent.total;
+            setAdvancement((mapLoaded + genotypeLoaded + phenotypeLoaded + featureLoaded) / (mapSize + genotypeSize + phenotypeSize + featureSize));
+          }
+        }
+      }).then((response) => {
+        featureFile = response.data;
+      }).catch((error) => {
+        console.error(error);
+      });
+      
+      loadingPromises.push(featurePromise);
+    }
+
     let genotypePromise = axios.get(config.genotypeFileURL, {
       headers: { 'Content-Type': 'text/plain' },
       onDownloadProgress: function (progressEvent){
         if (progressEvent.lengthComputable){
           genotypeLoaded = progressEvent.loaded;
           genotypeSize = progressEvent.total;
-          setAdvancement((mapLoaded + genotypeLoaded + phenotypeLoaded) / (mapSize + genotypeSize + phenotypeSize));
+          setAdvancement((mapLoaded + genotypeLoaded + phenotypeLoaded + featureLoaded) / (mapSize + genotypeSize + phenotypeSize +featureSize));
         }
         else
         	setProgressBarLabel("Downloading genotype file... " + formatFileSize(progressEvent.loaded));
@@ -1007,6 +1026,14 @@ export default function GenotypeRenderer() {
       if (mapFile !== undefined) {
         const mapImporter = new MapImporter();
         genomeMap = mapImporter.parseFile(mapFile);
+      }
+
+      setAdvancement(0);
+      setProgressBarLabel("Processing the features...");
+
+      if (featureFile !== undefined) {
+        const featureImporter = new FeatureImporter();
+        genomeFeatures = featureImporter.parseFile(featureFile, genomeMap);
       }
 
       setAdvancement(0);

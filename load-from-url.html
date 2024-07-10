@@ -7,15 +7,15 @@
       <div>
         <div>
           <label for="mapfile">Map file:</label>
-          <input type="text" id="mapfile" name="mapfile" value="http://bioinf.hutton.ac.uk/flapjack/sample-data/tutorials/ped-ver-tutorial.map">
+          <input type="text" id="mapfile" name="mapfile" value="http://gorgonzola.cshl.edu/flapjack-bytes/sample-data/sample.map">
         </div>
         <div>
           <label for="genofile">Genotype file:</label>
-          <input type="text" id="genofile" name="genofile" value="http://bioinf.hutton.ac.uk/flapjack/sample-data/tutorials/ped-ver-tutorial.dat">
+          <input type="text" id="genofile" name="genofile" value="http://gorgonzola.cshl.edu/flapjack-bytes/sample-data/sample.dat">
         </div>
         <div>
-          <label for="phenofile">Phenotype file:</label>
-          <input type="text" id="phenofile" name="phenofile">
+          <label for="featurefile">Feature file:</label>
+          <input type="text" id="featurefile" name="featurefile" value="http://gorgonzola.cshl.edu/flapjack-bytes/sample-data/sample.features.txt">
         </div>
         <input type="submit" action="#" id="submit" name="submit" value="Submit">
       </div>
@@ -33,7 +33,7 @@
               height: 600,
               mapFileURL: document.getElementById('mapfile').value,
               genotypeFileURL: document.getElementById('genofile').value,
-              phenotypeFileURL: document.getElementById('phenofile').value,
+              featureFileURL: document.getElementById('featurefile').value,
             });
             return false;
           });
