@@ -55,4 +55,4 @@ export default class FeatureImporter {
 
   // A method which converts BrAPI markerpositions into Flapjack markers for
   // rendering
-  }
+  } 
