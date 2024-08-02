@@ -451,7 +451,6 @@ export default class GenotypeCanvas {
     const firstMarkerPos = chromosome.markers[renderData.firstMarker].position;
     const lastMarkerPos = chromosome.markers[renderData.firstMarker + dataWidth].position;
     const scaleFactor = lastMarkerPos == 0 ? 0 /* hack for cases where variants are not positioned */ : chromosomeWidth / (lastMarkerPos - firstMarkerPos);
-    console.log("renderMarkers scaleFactor",scaleFactor);
 
     for (let markerIndex = renderData.firstMarker; markerIndex <= renderData.lastMarker; markerIndex += 1) {
       const marker = this.dataSet.genomeMap.chromosomes[this.selectedChromosome].markers[markerIndex];
@@ -460,7 +459,7 @@ export default class GenotypeCanvas {
       this.renderMarker(this.backContext, marker, xPos, firstMarkerPos, scaleFactor, scaleFactor == 0 ? xPos : drawStart);
     }
   }
-  renderFeatures(renderData,featureData) {
+  renderFeatures(renderData,featureData,type) {
     const chrStart = 0;
     const chrEnd = this.dataSet.genomeMap.chromosomes[this.selectedChromosome].markerCount() * this.boxSize;
     const drawStart = -this.translatedX;
@@ -478,11 +477,10 @@ export default class GenotypeCanvas {
     const firstMarkerPos = chromosome.markers[renderData.firstMarker].position;
     const lastMarkerPos = chromosome.markers[renderData.firstMarker + dataWidth].position;
     const scaleFactor = lastMarkerPos == 0 ? 0 /* hack for cases where variants are not positioned */ : chromosomeWidth / (lastMarkerPos - firstMarkerPos);
-    console.log("renderFeatures scaleFactor",scaleFactor);
     // this.dataSet.genomeMap.chromosomes[this.selectedChromosome].features.forEach(feature => {
     //   this.renderFeature(this.backContext, feature, scaleFactor, drawStart);
     // })
-    featureData.features.forEach(feature => {
+    featureData.features.filter(feature => feature.type === type).forEach(feature => {
       this.renderFeature(this.backContext, feature, firstMarkerPos, scaleFactor, drawStart);
     })
 
@@ -522,13 +520,14 @@ export default class GenotypeCanvas {
     this.renderMarkers(renderData);
 
     this.backContext.translate(this.alleleCanvasXOffset, -18);
+
+    // first render the genes in light blue
+    this.backContext.fillStyle = 'lightblue';
+    this.renderFeatures(renderData, featureData, 'gene');
+
+    // then render the exons in blue
     this.backContext.fillStyle = 'blue';
-
-
-    // const featureData = [
-    //   {start:10,end:20},{start:40,end:60}
-    // ];
-    this.renderFeatures(renderData, featureData);
+    this.renderFeatures(renderData, featureData, 'exon');
 
     this.backContext.translate(this.alleleCanvasXOffset, 36);
     this.backContext.strokeStyle = 'gray';
